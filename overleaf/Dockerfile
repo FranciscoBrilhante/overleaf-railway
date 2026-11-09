@@ -9,5 +9,7 @@ RUN if [ -n "$TEXLIVE_SCHEME" ]; then \
       tlmgr install "$TEXLIVE_SCHEME" && tlmgr path add; \
     fi
 
+RUN rm -f /etc/nginx/sites-enabled/*.patch /etc/nginx/sites-enabled/*.orig /etc/nginx/sites-enabled/*.rej
+
 # Overleaf's nginx listens on port 80.
 EXPOSE 80
