@@ -54,10 +54,12 @@ Railway runs each container as a separate service rather than running
    ENABLE_CONVERSIONS=true
    EMAIL_CONFIRMATION_DISABLED=true
    ```
-   Optional for `overleaf`: `TEXLIVE_SCHEME=scheme-full` bakes the full TeX
-   Live into the image. Builds take much longer and the image grows by several
-   GB, but packages installed later with `tlmgr` would be lost on every
-   redeploy.
+   The `overleaf` image always bakes in the full TeX Live (`scheme-full`,
+   without docs and sources), so every LaTeX package is available. The first
+   build takes a long time and the image grows by several GB; later builds
+   reuse the cached layer. Don't install packages at runtime with `tlmgr`:
+   they are lost on every redeploy. To use another CTAN mirror, set the
+   `TEXLIVE_MIRROR` variable to its `.../systems/texlive/tlnet` URL.
 
 6. On the `overleaf` service, go to **Settings → Networking → Generate Domain**
    and set the **target port to 80**. Leave `mongo` and `redis` without public

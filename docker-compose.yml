@@ -4,10 +4,7 @@
 
 services:
   overleaf:
-    build:
-      context: ./overleaf
-      args:
-        TEXLIVE_SCHEME: ${TEXLIVE_SCHEME:-}
+    build: ./overleaf
     restart: always
     depends_on:
       mongo:

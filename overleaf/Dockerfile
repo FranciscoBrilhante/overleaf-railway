@@ -1,16 +1,32 @@
 # Overleaf Community Edition
 FROM sharelatex/sharelatex:6.3.2
 
-# The base image ships a small TeX Live. Set this build arg to "scheme-full"
-# (adds several GB and a long build) to get every LaTeX package baked in.
-# Packages installed at runtime with tlmgr are lost on every redeploy.
-# Skip docs/sources (about half the download), use the Porto mirror,
-# then install everything
-RUN tlmgr option docfiles 0 && \
-    tlmgr option srcfiles 0 && \
-    tlmgr option repository https://mirrors.up.pt/pub/CTAN/systems/texlive/tlnet && \
-    tlmgr update --self && \
-    tlmgr install scheme-full && \
+# The base image ships a small TeX Live (2026 in 6.3.2). Bake the full TeX Live
+# (scheme-full) into the image: packages installed at runtime with tlmgr are
+# lost on every redeploy. Adds several GB and makes the first build slow; this
+# step comes first so later edits below reuse the cached layer.
+#
+# - docfiles/srcfiles 0 skips documentation and sources (about half the download).
+# - The live "tlnet" mirror only serves the newest TeX Live year. Once a newer
+#   year is released (each spring), "tlmgr update --self" fails with "Local TeX
+#   Live is older than remote repository", so fall back to the frozen archive
+#   for the installed year.
+# - "update --all" brings the base image's packages up to the same revision as
+#   the newly installed ones.
+# - The install is retried once because mirrors sometimes drop long downloads.
+ARG TEXLIVE_MIRROR=https://mirrors.up.pt/pub/CTAN/systems/texlive/tlnet
+RUN set -e; \
+    tlmgr option docfiles 0; \
+    tlmgr option srcfiles 0; \
+    tlmgr option repository "$TEXLIVE_MIRROR"; \
+    if ! tlmgr update --self; then \
+      TL_YEAR=$(tlmgr --version | sed -n 's/.*version \([0-9]\{4\}\).*/\1/p'); \
+      echo "Mirror is ahead of TeX Live $TL_YEAR, using the historic archive"; \
+      tlmgr option repository "https://ftp.math.utah.edu/pub/tex/historic/systems/texlive/$TL_YEAR/tlnet-final"; \
+      tlmgr update --self; \
+    fi; \
+    tlmgr update --all; \
+    tlmgr install scheme-full || tlmgr install scheme-full; \
     tlmgr path add
 
 # Pygments for minted
