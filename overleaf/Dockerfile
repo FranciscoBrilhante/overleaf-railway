@@ -11,5 +11,8 @@ RUN if [ -n "$TEXLIVE_SCHEME" ]; then \
 
 RUN rm -f /etc/nginx/sites-enabled/*.patch /etc/nginx/sites-enabled/*.orig /etc/nginx/sites-enabled/*.rej
 
+COPY 150_remove_stray_nginx_files.sh /etc/my_init.d/150_remove_stray_nginx_files.sh
+RUN chmod +x /etc/my_init.d/150_remove_stray_nginx_files.sh
+
 # Overleaf's nginx listens on port 80.
 EXPOSE 80
