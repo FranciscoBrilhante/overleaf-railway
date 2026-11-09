@@ -1,0 +1,60 @@
+# Overleaf Community Edition: overleaf + mongo (replica set) + redis.
+# Locally:   cp .env.example .env  (fill it in)  &&  docker compose up -d --build
+# Railway:   see README.md (each folder becomes one Railway service).
+
+services:
+  overleaf:
+    build:
+      context: ./overleaf
+      args:
+        TEXLIVE_SCHEME: ${TEXLIVE_SCHEME:-}
+    restart: always
+    depends_on:
+      mongo:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    ports:
+      - "${OVERLEAF_PORT:-8080}:80"
+    stop_grace_period: 60s
+    volumes:
+      - overleaf_data:/var/lib/overleaf
+    environment:
+      OVERLEAF_APP_NAME: ${OVERLEAF_APP_NAME:-Overleaf Community Edition}
+      OVERLEAF_SITE_URL: ${OVERLEAF_SITE_URL:-http://localhost:8080}
+      OVERLEAF_MONGO_URL: mongodb://mongo:27017/sharelatex
+      OVERLEAF_REDIS_HOST: redis
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+      OVERLEAF_INVITE_TOKEN_SECRET: ${OVERLEAF_INVITE_TOKEN_SECRET:?set OVERLEAF_INVITE_TOKEN_SECRET in .env}
+      ENABLED_LINKED_FILE_TYPES: project_file,project_output_file
+      ENABLE_CONVERSIONS: "true"
+      EMAIL_CONFIRMATION_DISABLED: "true"
+      OVERLEAF_BEHIND_PROXY: ${OVERLEAF_BEHIND_PROXY:-false}
+      OVERLEAF_SECURE_COOKIE: ${OVERLEAF_SECURE_COOKIE:-false}
+
+  mongo:
+    build: ./mongo
+    restart: always
+    environment:
+      MONGO_RS_HOST: mongo:27017
+    volumes:
+      - mongo_data:/data/db
+    healthcheck:
+      # Healthy only once the replica set has a primary.
+      test: ["CMD", "mongosh", "--quiet", "--eval", "quit(db.hello().isWritablePrimary ? 0 : 1)"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+      start_period: 20s
+
+  redis:
+    build: ./redis
+    restart: always
+    volumes:
+      - redis_data:/data
+
+volumes:
+  overleaf_data:
+  mongo_data:
+  redis_data:
