@@ -37,16 +37,13 @@ Railway runs each container as a separate service rather than running
    - `overleaf` → `/var/lib/overleaf`
 5. Set the **variables**:
 
-   **mongo**
-   ```
-   MONGO_RS_HOST=mongo.railway.internal:27017
-   ```
+   **mongo**: no variables needed.
 
    **overleaf**
    ```
    OVERLEAF_APP_NAME=Overleaf Community Edition
    OVERLEAF_SITE_URL=https://${{RAILWAY_PUBLIC_DOMAIN}}
-   OVERLEAF_MONGO_URL=mongodb://mongo.railway.internal:27017/sharelatex
+   OVERLEAF_MONGO_URL=mongodb://mongo.railway.internal:27017/sharelatex?directConnection=true
    OVERLEAF_REDIS_HOST=redis.railway.internal
    REDIS_HOST=redis.railway.internal
    REDIS_PORT=6379
@@ -70,10 +67,13 @@ Railway runs each container as a separate service rather than running
    admin account.
 
 ### Notes
-- **Mongo hostname is persistent.** The replica set is initialised once with
-  `MONGO_RS_HOST` and saved in the volume. If you rename the `mongo` service
-  later, you need to reconfigure the replica set (`rs.reconfig`) or wipe the
-  volume.
+- **Mongo replica set.** Overleaf needs MongoDB to run as a replica set. The
+  `mongo` service sets one up on first boot with the member address
+  `localhost:27017`, so it never depends on Railway hostnames. That's why
+  `OVERLEAF_MONGO_URL` must end in `?directConnection=true`. Without it,
+  Overleaf would try to reach "localhost" and time out.
+- **Troubleshooting.** Inside the overleaf container, run
+  `bash /overleaf-check-connections.sh` to test MongoDB and Redis.
 - **IPv4 private networking.** Overleaf's Redis client only connects over IPv4.
   Current Railway environments are dual-stack. Older environments with an
   IPv6-only private network fail with `ENOTFOUND redis.railway.internal`

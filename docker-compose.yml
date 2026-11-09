@@ -22,7 +22,7 @@ services:
     environment:
       OVERLEAF_APP_NAME: ${OVERLEAF_APP_NAME:-Overleaf Community Edition}
       OVERLEAF_SITE_URL: ${OVERLEAF_SITE_URL:-http://localhost:8080}
-      OVERLEAF_MONGO_URL: mongodb://mongo:27017/sharelatex
+      OVERLEAF_MONGO_URL: mongodb://mongo:27017/sharelatex?directConnection=true
       OVERLEAF_REDIS_HOST: redis
       REDIS_HOST: redis
       REDIS_PORT: "6379"
@@ -36,8 +36,6 @@ services:
   mongo:
     build: ./mongo
     restart: always
-    environment:
-      MONGO_RS_HOST: mongo:27017
     volumes:
       - mongo_data:/data/db
     healthcheck:

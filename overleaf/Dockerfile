@@ -9,10 +9,16 @@ RUN if [ -n "$TEXLIVE_SCHEME" ]; then \
       tlmgr install "$TEXLIVE_SCHEME" && tlmgr path add; \
     fi
 
+# nginx loads every file in sites-enabled/. A stray hotfix .patch file there
+# makes "nginx -t" fail and the container crash-loop. Remove any at build
+# time, and again at every start (before the nginx step) in case one appears.
 RUN rm -f /etc/nginx/sites-enabled/*.patch /etc/nginx/sites-enabled/*.orig /etc/nginx/sites-enabled/*.rej
-
 COPY 150_remove_stray_nginx_files.sh /etc/my_init.d/150_remove_stray_nginx_files.sh
 RUN chmod +x /etc/my_init.d/150_remove_stray_nginx_files.sh
+
+# Diagnostic: run "bash /overleaf-check-connections.sh" inside the container
+# to test the connections to MongoDB and Redis.
+COPY check-connections.sh /overleaf-check-connections.sh
 
 # Overleaf's nginx listens on port 80.
 EXPOSE 80
