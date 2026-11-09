@@ -33,8 +33,10 @@ services:
       ENABLED_LINKED_FILE_TYPES: project_file,project_output_file
       ENABLE_CONVERSIONS: "true"
       EMAIL_CONFIRMATION_DISABLED: "true"
-      OVERLEAF_BEHIND_PROXY: ${OVERLEAF_BEHIND_PROXY:-false}
-      OVERLEAF_SECURE_COOKIE: ${OVERLEAF_SECURE_COOKIE:-false}
+      # Behind an HTTPS proxy (like Railway) also set OVERLEAF_BEHIND_PROXY=true
+      # and OVERLEAF_SECURE_COOKIE=true. Don't set OVERLEAF_SECURE_COOKIE at all
+      # for plain-http local use: Overleaf enables secure cookies for ANY value,
+      # even "false", and then logins fail.
 
   mongo:
     build: ./mongo
