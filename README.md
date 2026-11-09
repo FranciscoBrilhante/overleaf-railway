@@ -72,6 +72,10 @@ Railway runs each container as a separate service rather than running
   `localhost:27017`, so it never depends on Railway hostnames. That's why
   `OVERLEAF_MONGO_URL` must end in `?directConnection=true`. Without it,
   Overleaf would try to reach "localhost" and time out.
+- **Railway's `PORT` variable.** Railway sets `PORT` in every container.
+  Overleaf's internal history service would listen on it instead of 3100, so
+  the Dockerfile clears it for that service. Without that, creating projects
+  from examples or zip uploads fails with `ECONNREFUSED 127.0.0.1:3100`.
 - **Troubleshooting.** Inside the overleaf container, run
   `bash /overleaf-check-connections.sh` to test MongoDB and Redis.
 - **IPv4 private networking.** Overleaf's Redis client only connects over IPv4.

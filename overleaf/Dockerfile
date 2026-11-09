@@ -16,6 +16,13 @@ RUN rm -f /etc/nginx/sites-enabled/*.patch /etc/nginx/sites-enabled/*.orig /etc/
 COPY 150_remove_stray_nginx_files.sh /etc/my_init.d/150_remove_stray_nginx_files.sh
 RUN chmod +x /etc/my_init.d/150_remove_stray_nginx_files.sh
 
+# Railway sets PORT in every container. Overleaf's history-v1 service listens
+# on $PORT (default 3100) while the other services expect it on 3100, so with
+# PORT set, creating projects from examples or zip uploads fails with
+# "ECONNREFUSED 127.0.0.1:3100". Clear PORT for that service only.
+RUN sed -i '2i unset PORT' /etc/service/history-v1-overleaf/run \
+ && grep -q '^unset PORT' /etc/service/history-v1-overleaf/run
+
 # Diagnostic: run "bash /overleaf-check-connections.sh" inside the container
 # to test the connections to MongoDB and Redis.
 COPY check-connections.sh /overleaf-check-connections.sh
