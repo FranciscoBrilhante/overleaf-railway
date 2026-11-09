@@ -4,10 +4,19 @@ FROM sharelatex/sharelatex:6.3.2
 # The base image ships a small TeX Live. Set this build arg to "scheme-full"
 # (adds several GB and a long build) to get every LaTeX package baked in.
 # Packages installed at runtime with tlmgr are lost on every redeploy.
-ARG TEXLIVE_SCHEME=""
-RUN if [ -n "$TEXLIVE_SCHEME" ]; then \
-      tlmgr install "$TEXLIVE_SCHEME" && tlmgr path add; \
-    fi
+# Skip docs/sources (about half the download), use the Porto mirror,
+# then install everything
+RUN tlmgr option docfiles 0 && \
+    tlmgr option srcfiles 0 && \
+    tlmgr option repository https://mirrors.up.pt/pub/CTAN/systems/texlive/tlnet && \
+    tlmgr update --self && \
+    tlmgr install scheme-full && \
+    tlmgr path add
+
+# Pygments for minted
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends python3-pygments && \
+    rm -rf /var/lib/apt/lists/*
 
 # nginx loads every file in sites-enabled/. A stray hotfix .patch file there
 # makes "nginx -t" fail and the container crash-loop. Remove any at build
